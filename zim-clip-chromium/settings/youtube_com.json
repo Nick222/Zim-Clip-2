@@ -1,0 +1,41 @@
+{
+  "title": [
+    "jsonld.name",
+    "meta[property=\"og:title\"]"
+  ],
+  "keywords": [
+    "jsonld.keywords",
+    "meta[name=\"keywords\"]"
+  ],
+  "date": [
+    "jsonld.uploadDate",
+    "meta[property=\"article:published_time\"]"
+  ],
+  "description": [
+    "jsonld.description",
+    "meta[property=\"og:description\"]",
+    "meta[name=\"description\"]"
+  ],
+  "type": [
+    "jsonld.@type",
+    "meta[property=\"og:type\"]"
+  ],
+  "url": [
+    "jsonld.@id",
+    "meta[property=\"og:url\"]"
+  ],
+  "image": [
+    "jsonld.thumbnailUrl",
+    "meta[property=\"og:image\"]"
+  ],
+  "duration": [
+    "jsonld.duration"
+  ],
+  "author": [
+    "meta[name=\"author\"]",
+    "jsonld.author.name"
+  ],
+  "publisher": [
+    "meta[property=\"og:site_name\"]"
+  ]
+}
