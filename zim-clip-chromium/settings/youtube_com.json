@@ -32,8 +32,7 @@
     "jsonld.duration"
   ],
   "author": [
-    "meta[name=\"author\"]",
-    "jsonld.author.name"
+    "youtube.author"
   ],
   "publisher": [
     "meta[property=\"og:site_name\"]"

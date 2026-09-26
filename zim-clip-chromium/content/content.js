@@ -229,6 +229,160 @@ var zimclip = {
 
     /*
      * =========================================================
+     * YouTube
+     * =========================================================
+     *
+     * Read the channel name from YouTube's ytInitialData.
+     * Based on the approach used by Zotero's YouTube translator.
+     */
+
+    getYouTubeAuthor: function () {
+        var author = '';
+
+        document.querySelectorAll(
+            'script:not([src])'
+        ).forEach(function (script) {
+            if (author) {
+                return;
+            }
+
+            var raw = script.textContent;
+            var marker = 'var ytInitialData = {';
+
+            var markerPos = raw.indexOf(marker);
+
+            if (markerPos === -1) {
+                return;
+            }
+
+            var start = raw.indexOf(
+                '{',
+                markerPos
+            );
+
+            if (start === -1) {
+                return;
+            }
+
+            var depth = 0;
+            var end = start;
+            var inString = false;
+
+            while (end < raw.length) {
+                var ch = raw[end];
+
+                if (inString) {
+                    if (ch === '\\') {
+                        end += 1;
+                    } else if (ch === '"') {
+                        inString = false;
+                    }
+                } else if (ch === '"') {
+                    inString = true;
+                } else if (ch === '{') {
+                    depth += 1;
+                } else if (ch === '}') {
+                    depth -= 1;
+
+                    if (depth === 0) {
+                        break;
+                    }
+                }
+
+                end += 1;
+            }
+
+            if (depth !== 0) {
+                return;
+            }
+
+            var data;
+
+            try {
+                data = JSON.parse(
+                    raw.substring(start, end + 1)
+                );
+            } catch (e) {
+                return;
+            }
+
+            zimclip.walkYouTubeData(
+                data,
+                function (node) {
+                    var owner =
+                        node.videoSecondaryInfoRenderer &&
+                        node.videoSecondaryInfoRenderer.owner &&
+                        node.videoSecondaryInfoRenderer.owner
+                            .videoOwnerRenderer;
+
+                    if (!owner) {
+                        return false;
+                    }
+
+                    var name =
+                        owner.title &&
+                        owner.title.runs &&
+                        owner.title.runs[0] &&
+                        owner.title.runs[0].text;
+
+                    if (name) {
+                        author = name;
+                        return true;
+                    }
+
+                    return false;
+                }
+            );
+        });
+
+        return author;
+    },
+
+    walkYouTubeData: function (node, visit) {
+        if (
+            !node ||
+            typeof node !== 'object'
+        ) {
+            return false;
+        }
+
+        if (visit(node)) {
+            return true;
+        }
+
+        if (Array.isArray(node)) {
+            for (var i = 0; i < node.length; i += 1) {
+                if (
+                    zimclip.walkYouTubeData(
+                        node[i],
+                        visit
+                    )
+                ) {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        var keys = Object.keys(node);
+
+        for (var j = 0; j < keys.length; j += 1) {
+            if (
+                zimclip.walkYouTubeData(
+                    node[keys[j]],
+                    visit
+                )
+            ) {
+                return true;
+            }
+        }
+
+        return false;
+    },
+
+    /*
+     * =========================================================
      * Read one profile source
      * =========================================================
      *
@@ -245,6 +399,12 @@ var zimclip = {
     readProfileSource: function (source, jsonLd) {
         if (!source || typeof source !== 'string') {
             return [];
+        }
+
+        if (source === 'youtube.author') {
+            var author = zimclip.getYouTubeAuthor();
+
+            return author ? [author] : [];
         }
 
         if (source.indexOf('jsonld.') === 0) {
