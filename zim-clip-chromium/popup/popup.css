@@ -1,0 +1,138 @@
+
+main {
+    padding: 0;
+    margin: 0;
+}
+
+article {
+    position: relative;
+    transition: all 0.1s;
+}
+
+h1 { 
+    display: flex;
+    flex-direction: row;
+    position: relative;
+    font-size: 1.5rem;
+    line-height: 1;
+    font-weight: normal;
+    text-align: left;
+    margin: 0;
+    color: var(--green);
+    text-shadow: 2px 2px #fff;
+}
+h1 span {
+    flex: 1 1 auto;
+    display: block;
+    padding: 0.5rem 1rem;
+}
+.options {
+    width: 20%;
+    font-size: 1rem;
+    line-height: 1.5;
+    cursor: pointer;
+}
+
+p {
+    margin: 0;
+}
+
+ul {
+    /* box */
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    /* typo */
+    text-align: left;
+}
+
+/* flex layout */
+
+li {
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+    border-width: 1px 0 0;
+    border-style: solid;
+    transition: all 0.1s;
+}
+
+li > * {
+    flex: 1 1 auto;
+    display: block;
+    padding: 0.5rem 1rem;
+    box-sizing: border-box;
+    /* typo */
+    text-overflow: ellipsis;
+    overflow: hidden;
+    white-space: nowrap;
+}
+
+li[aria-disabled=true] {
+    color: rgba(0,0,0,0.3);
+    cursor: default;
+}
+
+/* actions */
+
+.action-label {
+    font-weight: normal;
+    text-shadow: 2px 2px #fff;
+    color: var(--red);
+}
+
+.action {
+    flex-grow: 0;
+    width: 20%;
+    background-repeat: no-repeat;
+    background-size: auto 60%;
+    background-position: 50% 50%;
+    font-size: 0;
+    border-width: 0 0 0 1px;
+    border-style: solid;
+    cursor: pointer;
+}
+.zim-action {
+    background-image: url('../icons/zim-32.png');
+}
+.clipboard-action {
+    background-image: url('../icons/clipboard-32.png');
+}
+
+[aria-disabled=true] > span {
+    color: rgba(0,0,0,0.5);
+    text-shadow: none;
+}
+[aria-disabled=true] > .zim-action {
+    background-image: url('../icons/zim-disabled-32.png');
+}
+[aria-disabled=true] > .clipboard-action {
+    background-image: url('../icons/clipboard-disabled-32.png');
+}
+
+li:not([aria-disabled=true]) > .action:hover {
+    background-color: #4C9ED9;
+    color: #fff;
+}
+
+label {
+    vertical-align: middle;
+    flex-grow: none;
+    max-width: 30%;
+    font-size: smaller;
+}
+label,
+span {
+    -moz-user-select: none;
+    -webkit-user-select: none;
+    -ms-user-select:none;
+    -o-user-select:none;
+    user-select:none;
+}
+
+#clipboard {
+    top: 0;
+    height: 0;
+    position: absolute;
+    z-index: -10;
+}

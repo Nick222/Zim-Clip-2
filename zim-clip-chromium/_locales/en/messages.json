@@ -1,0 +1,23 @@
+{
+    "clipToZimAction": {
+        "message": "Copy text selected on the current web page to a special page in Zim.",
+        "description": "Description of the 'clip' action"
+    },
+    "markToZimAction": {
+        "message": "Create a new Zim page based on the current web page.",
+        "description": "Description of the 'mark' action"
+    },
+    "optionsSaved": {
+        "message": "Options saved.",
+        "description": "Message when options are saved."
+    },
+    "optionsSavedError": {
+        "message": "Error while saving options: $ERROR$",
+        "description": "Message when options saving has failed.",
+        "placeholders": {
+            "error": {
+                "content": "$1"
+            }
+        }
+    }
+}

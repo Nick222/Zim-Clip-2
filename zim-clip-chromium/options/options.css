@@ -1,0 +1,114 @@
+html {
+    overflow: auto;
+}
+body {
+    max-width: 42rem;
+    margin: 2rem auto;
+    background: #fff;
+    box-shadow: 2px 2px rgba(0,0,0,0.2);
+}
+h1 {
+    padding: 1rem 2rem;
+    margin: 0;
+    color: var(--almost-white);
+    background: var(--green);
+}
+h2 {
+    color: var(--green);
+}
+main {
+    padding: 2rem;
+    margin: 0 auto;
+}
+label {
+    display: inline-block;
+    width: 25%;
+    vertical-align: top;
+    font-weight: bold;
+    text-align: right;
+    padding-right: 1rem;
+    color: var(--red);
+}
+textarea, select {
+    display: inline-block;
+    width: 70%;
+    background: #fff;
+}
+textarea {
+    min-height: 5rem;
+}
+footer p {
+    margin: 0;
+}
+#logger {
+    font-size: smaller;
+    font-weight: bold;
+    min-height: 1.25rem;
+    color: #999;
+    padding: 0.5rem 2rem;
+    transition: all 0.5s;
+}
+#logger[data-type=warn] {
+    color: orange;
+}
+#logger[data-type=error] {
+    color: red;
+}
+
+footer button {
+    display: block;
+    box-sizing: border-box;
+    width: 100%;
+    padding: 1rem 2rem;
+    border-width: 0;
+    cursor: pointer;
+    background-color: var(--green);
+    color: var(--almost-white);
+}
+footer button:hover {
+    opacity: 0.8;
+}
+
+/* help */
+.help {
+    padding: 0 2rem 2rem;
+    border-width: 1px 0 0;
+    border-style: dotted;
+    border-color: var(--green);
+    overflow: hidden;
+}
+.help p,
+.help dl {
+    margin: 0 0 1rem;
+}
+.help dl {
+    border: 1px solid var(--grey);
+}
+.help dt,
+.help dd {
+    padding: 0.25rem 0.5rem;
+}
+.help dt {
+    float: left;
+    width: 8rem;
+    clear: left;
+    font-weight: bold;
+    text-align: right;
+    border-width: 0 0 1px;
+    border-style: solid;
+    border-color: #fff;
+    background: var(--grey);
+}
+.help dd {
+    clear: right;
+    padding: 0.25rem 0.5rem 0.25rem 9.5rem;
+    margin: 0;
+    border-width: 0 0 1px;
+    border-style: solid;
+    border-color: var(--grey);
+}
+.help dt:last-child,
+.help dd:last-child {
+    border-width: 0;
+}
+

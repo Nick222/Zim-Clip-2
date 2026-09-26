@@ -1,0 +1,30 @@
+{
+  "title": [
+    "meta[property=\"og:title\"]"
+  ],
+  "author": [
+    "text:div.sublink a[href^=\"/novosti_nauki/t/\"]:first-of-type"
+  ],
+  "date": [
+    "text:div.sublink span.date"
+  ],
+  "description": [
+    "meta[property=\"og:description\"]",
+    "meta[name=\"description\"]"
+  ],
+  "publisher": [
+    "meta[property=\"og:site_name\"]"
+  ],
+  "type": [
+    "meta[property=\"og:type\"]"
+  ],
+  "url": [
+    "meta[property=\"og:url\"]"
+  ],
+  "image": [
+    "meta[property=\"og:image\"]"
+  ],
+  "keywords": [
+    "meta[property=\"article:tag\"]"
+  ]
+}

@@ -1,0 +1,59 @@
+{
+  "manifest_version": 3,
+  "name": "zim-clip",
+  "version": "2.0.0",
+  "description": "Copy selected web content into Zim or maintain a list of bookmarks in Zim.",
+  "icons": {
+    "32": "icons/zim-clip-32.png",
+    "48": "icons/zim-clip-48.png"
+  },
+  "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAjGfYhlmB9GqD65PU8RC0fFr3Fy3xyXmWBIxnjEGQrtfLGWHduSLv6MRj/DS0hUyJkebut9ajtDe4mAPKaIxv+PD06/4t+phsdSH2dTVBITDsxRDtZz14Z8DoLGfuZXcGERcrpfoP7106bjMlNNW4DLh1dUfna843LIx4YpgSvDOIuzWWIAopp7gPvpCPZ5CVOqiDFirsKQ2LSMxnYiR1TOFXHE0/sTSDnTDJCGzwssBS9Vi+qaKdc9ewsR6MpRkyfja3wdLIjH3GhwMLEcvWYt7pu2Ve2MdfR3NPZqJ8fB6TJK2twIGCVmwb3wN+BTM7FlQxMXKNe7gVRklTlBQ+sQIDAQAB",
+  "background": {
+    "service_worker": "background/service-worker.js"
+  },
+  "action": {
+    "default_icon": {
+      "32": "icons/zim-clip-32.png"
+    },
+    "default_title": "zim-clip",
+    "default_popup": "popup/popup.html"
+  },
+  "options_ui": {
+    "page": "options/options.html",
+    "open_in_tab": true
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "<all_urls>"
+      ],
+      "js": [
+        "thirdparty/browser-polyfill.js",
+        "content/Html2Wiki.js",
+        "content/content.js"
+      ]
+    }
+  ],
+  "permissions": [
+    "activeTab",
+    "contextMenus",
+    "downloads",
+    "nativeMessaging",
+    "storage",
+    "tabs"
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "settings/*.json"
+      ],
+      "matches": [
+        "<all_urls>"
+      ]
+    }
+  ],
+  "default_locale": "en"
+}

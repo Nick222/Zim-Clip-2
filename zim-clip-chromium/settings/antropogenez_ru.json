@@ -1,0 +1,20 @@
+{
+  "title": [
+    "meta[property=\"og:title\"]"
+  ],
+  "author": [
+    "text:a[href*=\"/author/\"]"
+  ],
+  "date": [
+    "meta[name=\"date\"]"
+  ],
+  "publisher": [
+    "value:Антропогенез.РУ"
+  ],
+  "description": [
+    "meta[property=\"og:description\"]"
+  ],
+  "image": [
+    "meta[property=\"og:image\"]"
+  ]
+}

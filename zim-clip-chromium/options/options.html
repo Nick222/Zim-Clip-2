@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Zim-clip options</title>
+        <meta charset="utf-8">
+        <script src="../thirdparty/browser-polyfill.js"></script>
+        <script src="../common/Logger.js"></script>
+        <link rel="stylesheet" href="../common/base.css">
+        <link rel="stylesheet" href="options.css">
+    </head>
+    <body>
+        <header>
+            <h1>Zim-clip&nbsp;: options</h1>
+        </header>
+        <main>
+            <p title="markNotebookOption">
+                <label for="markNotebook">Mark notebook</label>
+                <select id="markNotebook" data-def="__default__">
+                    <option value="__default__">Zim default</option>
+                </select>
+            </p>
+            <p title="linkPatternOption">
+                <label for="linkPattern">Mark template</label>
+                <textarea id="linkPattern" placeholder="[[${page.url}|${page.title}]]" data-def="[[${page.url}|${page.title}]]" spellcheck="false" required></textarea>
+            </p>
+            <p title="clipNotebookOption">
+                <label for="clipNotebook">Clip notebook</label>
+                <select id="clipNotebook" data-def="__default__">
+                    <option value="__default__">Zim default</option>
+                </select>
+            </p>
+            <p title="clipDestinationOption">
+                <label for="clipDestination">Clip destination</label>
+                <select id="clipDestination" data-def="zim">
+                    <option value="zim">Zim default location</option>
+                    <option value="clipboard">Clipboard</option>
+                </select>
+            </p>
+            <p title="clipPatternOption">
+                <label for="clipPattern">Clip template</label>
+                <textarea id="clipPattern" placeholder="${page.selection}\n[[${page.url}|${page.title}]]" data-def="${page.selection}\n[[${page.url}|${page.title}]]" spellcheck="false" required></textarea>
+            </p>
+            <p title="formatOption">
+                <label for="format">Wiki syntax</label>
+                <select id="format" data-def="zim">
+                    <option value="zim">Zim</option>
+                    <option value="md">Markdown</option>
+                </select>
+            </p>
+        </main>
+        <aside class="help">
+            <h2>Help</h2>
+            <p>Template syntax&nbsp;: <code>${page.PAGE_PROPERTY}</code> where <code>PAGE_PROPERTY</code> can be&nbsp;:</p>
+            <dl>
+                <dt>title</dt><dd>Page title</dd>
+                <dt>type</dt><dd>Document type</dd>
+                <dt>url</dt><dd>Page url</dd>
+                <dt>image</dt><dd>Image associated</dd>
+                <dt>author</dt><dd>Page author</dd>
+                <dt>date</dt><dd>Publication/creation date</dd>
+                <dt>modified</dt><dd>Modification date</dd>
+                <dt>publisher</dt><dd>Publisher</dd>
+                <dt>description</dt><dd>Page description</dd>
+                <dt>keywords</dt><dd>Page keywords</dd>
+            </dl>
+        </aside>
+        <footer>
+            <p id="logger"></p>
+            <p><button type="button" id="save">OK</button></p>
+        </footer>
+        <script src="options.js"></script>
+    </body>
+</html>
