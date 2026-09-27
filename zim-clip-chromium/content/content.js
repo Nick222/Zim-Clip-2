@@ -105,6 +105,48 @@ var zimclip = {
         data.selection = '';
         data.pics = null;
 
+        if (
+            window.location.hostname.includes('youtube.com')
+        ) {
+            const panel = [...document.querySelectorAll(
+                'ytd-engagement-panel-section-list-renderer'
+            )].find(el =>
+                el.innerText.includes('Расшифровка видео') &&
+                el.innerText.includes('Поиск в расшифровке')
+            );
+
+            if (panel) {
+                const lines = panel.innerText
+                    .split('\n')
+                    .map(s => s.trim())
+                    .filter(Boolean);
+
+                const transcript = [];
+
+                for (let i = 0; i < lines.length; i++) {
+                    if (
+                        /^\d+:\d+$/.test(lines[i]) &&
+                        lines[i + 1]
+                    ) {
+                        const text = lines[i + 2];
+
+                        if (
+                            text &&
+                            !/^\d+:\d+$/.test(text)
+                        ) {
+                            transcript.push(text);
+                        }
+                    }
+                }
+
+                data.selection = transcript
+                    .join(' ')
+                    .trim();
+
+                return data;
+            }
+        }
+
         h2w.getRule('img').init();
 
         for (i = 0; i < selection.rangeCount; i += 1) {
@@ -472,7 +514,7 @@ var zimclip = {
         } catch (e) {
             return [];
         }
-	},
+    },
 
     normalizeProfileValue: function (value) {
         if (value === null || value === undefined) {
@@ -988,6 +1030,56 @@ var zimclip = {
     }
 };
 
+function hasYouTubeTranscript() {
+    return window.location.hostname.includes('youtube.com') &&
+        [...document.querySelectorAll('button')].some(
+            button =>
+                button.getAttribute('aria-label') ===
+                'Показать текст видео'
+        );
+}
+
+let lastTranscriptState = hasYouTubeTranscript();
+
+const transcriptObserver =
+    new MutationObserver(() => {
+        const current = hasYouTubeTranscript();
+
+        if (current === lastTranscriptState) {
+            return;
+        }
+
+        lastTranscriptState = current;
+
+        browser.runtime.sendMessage({
+            action: 'transcriptState',
+            hasTranscript: current
+        }).catch(() => {});
+    });
+
+transcriptObserver.observe(
+    document.documentElement,
+    {
+        childList: true,
+        subtree: true
+    }
+);
+
+window.addEventListener('yt-navigate-finish', () => {
+    const current = hasYouTubeTranscript();
+
+    lastTranscriptState = current;
+
+    browser.runtime.sendMessage({
+        action: 'transcriptState',
+        hasTranscript: current
+    }).catch(() => {});
+});
+
+browser.runtime.sendMessage({
+    action: 'transcriptState',
+    hasTranscript: lastTranscriptState
+}).catch(() => {});
 
 browser.runtime.onMessage.addListener(
     (message) => {
@@ -997,8 +1089,123 @@ browser.runtime.onMessage.addListener(
             return Promise.resolve({
                 hasSelection:
                     !window.getSelection()
-                        .isCollapsed
+                        .isCollapsed,
+                hasTranscript:
+                    window.location.hostname.includes('youtube.com') &&
+                    [...document.querySelectorAll('button')].some(
+                        button =>
+                            button.getAttribute('aria-label') ===
+                            'Показать текст видео'
+                    )
             });
+
+        case 'copyTranscript': {
+            const getTranscriptPanel = () => [
+                ...document.querySelectorAll(
+                    'ytd-engagement-panel-section-list-renderer'
+                )
+            ].find(
+                element =>
+                    element.innerText.includes('Расшифровка видео')
+            );
+
+            const extractTranscript = panel => {
+                const lines = panel.innerText
+                    .split('\n')
+                    .map(s => s.trim())
+                    .filter(Boolean);
+
+                const transcript = [];
+
+                for (let i = 0; i < lines.length; i++) {
+                    if (
+                        /^\d+:\d+$/.test(lines[i]) &&
+                        lines[i + 1]
+                    ) {
+                        const text = lines[i + 2];
+
+                        if (
+                            text &&
+                            !/^\d+:\d+$/.test(text)
+                        ) {
+                            transcript.push(text);
+                        }
+                    }
+                }
+
+                return transcript.join(' ');
+            };
+
+            const existingPanel = getTranscriptPanel();
+
+            if (existingPanel) {
+                const text = extractTranscript(existingPanel);
+
+                if (text) {
+                    return Promise.resolve({text});
+                }
+            }
+
+            const button = [
+                ...document.querySelectorAll('button')
+            ].find(
+                button =>
+                    button.getAttribute('aria-label') ===
+                    'Показать текст видео'
+            );
+
+            if (button) {
+                button.click();
+            }
+
+            return new Promise(resolve => {
+                const observer = new MutationObserver(() => {
+                    const panel = getTranscriptPanel();
+
+                    if (!panel) {
+                        return;
+                    }
+
+                    const text = extractTranscript(panel);
+
+                    if (!text) {
+                        return;
+                    }
+
+                    observer.disconnect();
+                    clearTimeout(timeout);
+
+                    resolve({text});
+                });
+
+                const timeout = setTimeout(() => {
+                    observer.disconnect();
+                    resolve({text: ''});
+                }, 10000);
+
+                observer.observe(
+                    document.documentElement,
+                    {
+                        childList: true,
+                        subtree: true,
+                        characterData: true
+                    }
+                );
+
+                const panel = getTranscriptPanel();
+
+                if (panel) {
+                    const text = extractTranscript(panel);
+
+                    if (text) {
+                        observer.disconnect();
+                        clearTimeout(timeout);
+
+                        resolve({text});
+                    }
+                }
+            });
+        }
 
         case 'metas':
             return zimclip.getMetas();

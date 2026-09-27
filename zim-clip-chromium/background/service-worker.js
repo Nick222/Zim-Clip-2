@@ -116,7 +116,7 @@ async function mark() {
     const text = format(pref.linkPattern, data);
 
     const basename = (data.title || 'clip')
-        .replace(/[:./]/g, '')
+        .replace(/[:./|?]/g, '')
         .trim()
         .slice(0, 120)
         .trim();
@@ -161,12 +161,34 @@ async function clip() {
     const args = [
         `notebook=${pref.clipNotebook || OPTION_MARK_NOTEBOOK_DEFAULT}`,
         `option:url=${tab.url}`,
-        `basename=${(data.title || 'clip').replace(/[:./]/g, '').trim()}`,
+        `basename=${(data.title || 'clip').replace(/[:./|?]/g, '').trim()}`,
         `text=${encodeURIComponent(data.selection)}`,
         'clips'
     ];
 
     await sendToZim(args);
+}
+
+async function copyTranscript() {
+    const tab = await getActiveTab();
+
+    if (!tab || !isMarkable(tab.url)) {
+        return;
+    }
+
+    const result = await chrome.tabs.sendMessage(
+        tab.id,
+        {action: 'copyTranscript'}
+    );
+
+    if (!result || !result.text) {
+        return;
+    }
+
+    await sendToZim([
+        `text=${encodeURIComponent(result.text)}`,
+        'clipboard'
+    ]);
 }
 
 async function initPrefs() {
@@ -176,6 +198,25 @@ async function initPrefs() {
         clipPattern: OPTION_CLIP_PATTERN_DEFAULT,
         format: OPTION_FORMAT_DEFAULT
     }));
+}
+
+async function updateTranscriptMenu(tab) {
+    let hasTranscript = false;
+
+    if (tab && isMarkable(tab.url)) {
+        try {
+            const result = await chrome.tabs.sendMessage(
+                tab.id,
+                {action: 'hasSelection'}
+            );
+
+            hasTranscript = !!result.hasTranscript;
+        } catch (e) {}
+    }
+
+    await chrome.contextMenus.update('copyTranscript', {
+        enabled: hasTranscript
+    });
 }
 
 async function initContextMenus() {
@@ -192,7 +233,30 @@ async function initContextMenus() {
         title: 'Copy selected content to Zim',
         contexts: ['selection']
     });
+
+    chrome.contextMenus.create({
+        id: 'copyTranscript',
+        title: 'Copy YouTube transcript',
+        contexts: ['all'],
+        enabled: false
+    });
+
+    const tab = await getActiveTab();
+    await updateTranscriptMenu(tab);
+
 }
+
+chrome.tabs.onActivated.addListener(({tabId}) => {
+    chrome.tabs.get(tabId)
+        .then(tab => updateTranscriptMenu(tab))
+        .catch(() => {});
+});
+
+chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
+    if (changeInfo.status === 'complete') {
+        updateTranscriptMenu(tab).catch(() => {});
+    }
+});
 
 chrome.runtime.onInstalled.addListener(() => {
     initPrefs().catch(err => logger.error(err));
@@ -209,6 +273,8 @@ chrome.contextMenus.onClicked.addListener((info) => {
         mark().catch(err => logger.error(err));
     } else if (info.menuItemId === 'clipToZim') {
         clip().catch(err => logger.error(err));
+    } else if (info.menuItemId === 'copyTranscript') {
+        copyTranscript().catch(err => logger.error(err));
     }
 });
 
@@ -217,6 +283,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         if (message.action === 'state') {
             const tab = await getActiveTab();
             let hasSelection = false;
+            let hasTranscript = false;
 
             if (tab && isMarkable(tab.url)) {
                 try {
@@ -226,14 +293,33 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
                     );
 
                     hasSelection = !!result.hasSelection;
+                    hasTranscript = !!result.hasTranscript;
                 } catch (e) {}
             }
 
             sendResponse({
                 markable: !!tab && isMarkable(tab.url),
-                hasSelection
+                hasSelection,
+                hasTranscript
             });
 
+            return;
+        }
+
+        if (message.action === 'transcriptState') {
+            const tab = await getActiveTab();
+
+            if (
+                sender.tab &&
+                tab &&
+                sender.tab.id === tab.id
+            ) {
+                await chrome.contextMenus.update('copyTranscript', {
+                    enabled: !!message.hasTranscript
+                });
+            }
+
+            sendResponse({ok: true});
             return;
         }
 
@@ -245,6 +331,12 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
         if (message.action === 'clipToZim') {
             await clip();
+            sendResponse({ok: true});
+            return;
+        }
+
+        if (message.action === 'copyTranscript') {
+            await copyTranscript();
             sendResponse({ok: true});
             return;
         }

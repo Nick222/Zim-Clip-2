@@ -12,11 +12,12 @@ async function init() {
     const state = await chrome.runtime.sendMessage({action: 'state'});
     activate('markToZim', state.markable);
     activate('clipToZim', state.markable && state.hasSelection);
+    activate('copyTranscript', state.markable && state.hasTranscript);
 
     document.getElementById('actions').addEventListener('click', async (e) => {
         const target = e.target.closest('.zim-action');
         if (!target || target.parentNode.getAttribute('aria-disabled') === 'true') return;
-        chrome.runtime.sendMessage({action: target.id});
+        await chrome.runtime.sendMessage({action: target.id});
         window.close();
     });
     document.getElementById('showOptions').addEventListener('click', () => {

@@ -7,6 +7,10 @@
         "message": "Create a new Zim page based on the current web page.",
         "description": "Description of the 'mark' action"
     },
+    "copyTranscriptAction": {
+        "message": "Copy YouTube transcript.",
+        "description": "Description of the 'copy transcript' action"
+    },
     "optionsSaved": {
         "message": "Options saved.",
         "description": "Message when options are saved."

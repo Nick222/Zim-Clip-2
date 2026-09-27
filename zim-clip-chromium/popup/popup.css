@@ -115,6 +115,11 @@ li:not([aria-disabled=true]) > .action:hover {
     color: #fff;
 }
 
+li:not([aria-disabled=true]) > .action:active {
+    background-color: #3577a8;
+    transform: translateY(1px);
+}
+
 label {
     vertical-align: middle;
     flex-grow: none;
