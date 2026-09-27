@@ -1,0 +1,30 @@
+{
+  "title": [
+    "meta[itemprop=\"headline\"]",
+    "meta[property=\"og:title\"]"
+  ],
+  "author": [
+    "div[itemprop=\"author\"] meta[itemprop=\"name\"]"
+  ],
+  "date": [
+    "meta[itemprop=\"datePublished\"]"
+  ],
+  "modified": [
+    "meta[itemprop=\"dateModified\"]"
+  ],
+  "publisher": [
+    "meta[name=\"og:site_name\"]"
+  ],
+  "description": [
+    "meta[name=\"description\"]"
+  ],
+  "keywords": [
+    "meta[name=\"keywords\"]"
+  ],
+  "type": [
+    "meta[property=\"og:type\"]"
+  ],
+  "image": [
+    "meta[property=\"og:image\"]"
+  ]
+}
