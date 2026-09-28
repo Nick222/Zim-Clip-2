@@ -90,6 +90,54 @@ var zimclip = {
         return zimclip.siteProfilePromise;
     },
 
+    getYouTubeTranscript: function () {
+        let segments = [
+            ...document.querySelectorAll(
+                'ytd-transcript-segment-renderer'
+            )
+        ];
+
+        if (!segments.length) {
+            segments = [
+                ...document.querySelectorAll(
+                    'transcript-segment-view-model'
+                )
+            ];
+
+            return segments
+                .map(segment => {
+                    const timestamp =
+                        segment.querySelector(
+                            '.ytwTranscriptSegmentViewModelTimestamp'
+                        )?.textContent.trim();
+
+                    const text =
+                        segment.querySelector(
+                            '.ytAttributedStringHost'
+                        )?.textContent.trim();
+
+                    if (!timestamp || !text) {
+                        return '';
+                    }
+
+                    return `${timestamp} ${text}`;
+                })
+                .filter(Boolean)
+                .join('\n');
+        }
+
+        return segments
+            .map(segment =>
+                segment.innerText
+                    .split('\n')
+                    .map(s => s.trim())
+                    .filter(Boolean)
+                    .join(' ')
+            )
+            .filter(Boolean)
+            .join('\n');
+    },
+
     /*
      * =========================================================
      * HTML → Wiki
@@ -108,46 +156,14 @@ var zimclip = {
         if (
             window.location.hostname.includes('youtube.com')
         ) {
-            const panel = [...document.querySelectorAll(
-                'ytd-engagement-panel-section-list-renderer'
-            )].find(el =>
-                el.innerText.includes('Расшифровка видео') &&
-                el.innerText.includes('Поиск в расшифровке')
-            );
+            const transcript =
+                zimclip.getYouTubeTranscript();
 
-            if (panel) {
-                const lines = panel.innerText
-                    .split('\n')
-                    .map(s => s.trim())
-                    .filter(Boolean);
-
-                const transcript = [];
-
-                for (let i = 0; i < lines.length; i++) {
-                    if (
-                        /^\d+:\d+$/.test(lines[i]) &&
-                        lines[i + 1]
-                    ) {
-                        const text = lines[i + 2];
-
-                        if (
-                            text &&
-                            !/^\d+:\d+$/.test(text)
-                        ) {
-                            transcript.push(text);
-                        }
-                    }
-                }
-
-                data.selection = transcript
-                    .join(' ')
-                    .trim();
-
+            if (transcript) {
+                data.selection = transcript;
                 return data;
             }
         }
-
-        h2w.getRule('img').init();
 
         for (i = 0; i < selection.rangeCount; i += 1) {
             data.selection += h2w.read(
@@ -1100,50 +1116,10 @@ browser.runtime.onMessage.addListener(
             });
 
         case 'copyTranscript': {
-            const getTranscriptPanel = () => [
-                ...document.querySelectorAll(
-                    'ytd-engagement-panel-section-list-renderer'
-                )
-            ].find(
-                element =>
-                    element.innerText.includes('Расшифровка видео')
-            );
+            let text = zimclip.getYouTubeTranscript();
 
-            const extractTranscript = panel => {
-                const lines = panel.innerText
-                    .split('\n')
-                    .map(s => s.trim())
-                    .filter(Boolean);
-
-                const transcript = [];
-
-                for (let i = 0; i < lines.length; i++) {
-                    if (
-                        /^\d+:\d+$/.test(lines[i]) &&
-                        lines[i + 1]
-                    ) {
-                        const text = lines[i + 2];
-
-                        if (
-                            text &&
-                            !/^\d+:\d+$/.test(text)
-                        ) {
-                            transcript.push(text);
-                        }
-                    }
-                }
-
-                return transcript.join(' ');
-            };
-
-            const existingPanel = getTranscriptPanel();
-
-            if (existingPanel) {
-                const text = extractTranscript(existingPanel);
-
-                if (text) {
-                    return Promise.resolve({text});
-                }
+            if (text) {
+                return Promise.resolve({text});
             }
 
             const button = [
@@ -1160,13 +1136,8 @@ browser.runtime.onMessage.addListener(
 
             return new Promise(resolve => {
                 const observer = new MutationObserver(() => {
-                    const panel = getTranscriptPanel();
-
-                    if (!panel) {
-                        return;
-                    }
-
-                    const text = extractTranscript(panel);
+                    const text =
+                        zimclip.getYouTubeTranscript();
 
                     if (!text) {
                         return;
@@ -1192,17 +1163,14 @@ browser.runtime.onMessage.addListener(
                     }
                 );
 
-                const panel = getTranscriptPanel();
+                const text =
+                    zimclip.getYouTubeTranscript();
 
-                if (panel) {
-                    const text = extractTranscript(panel);
+                if (text) {
+                    observer.disconnect();
+                    clearTimeout(timeout);
 
-                    if (text) {
-                        observer.disconnect();
-                        clearTimeout(timeout);
-
-                        resolve({text});
-                    }
+                    resolve({text});
                 }
             });
         }
