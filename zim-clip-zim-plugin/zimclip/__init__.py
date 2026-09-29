@@ -3,7 +3,7 @@ from zim.notebook import NotebookExtension, resolve_notebook, build_notebook
 from zim.notebook import Path
 from zim.main import UsageError, build_command
 from zim.plugins.quicknote import QuickNotePluginCommand
-
+from zim.parse.encode import url_decode, URL_ENCODE_DATA
 
 class ZimClipPlugin(PluginClass):
     plugin_info = {
@@ -44,7 +44,10 @@ class ZimClipPluginCommand(QuickNotePluginCommand):
             if option.startswith('zimclip_action='):
                 action = option[len('zimclip_action='):]
             elif option.startswith('zimclip_title='):
-                title = option[len('zimclip_title='):]
+                title = url_decode(
+                    option[len('zimclip_title='):],
+                    mode=URL_ENCODE_DATA
+                )
 
         # --- Clip: current Zim page ---
         if action == 'clips':
@@ -186,6 +189,15 @@ class ZimClipPluginCommand(QuickNotePluginCommand):
         properties = plugin.notebook_properties(notebook)
 
         self.opts['namespace'] = properties['mark_section']
+
+        with open(
+            '/home/nick/TMP/zimclip_opts.txt',
+            'w',
+            encoding='utf-8'
+        ) as f:
+            f.write(repr(self.opts) + '\n')
+
+
 
         dialog = QuickNotePluginCommand.run(self)
 
