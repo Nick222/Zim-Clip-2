@@ -116,7 +116,7 @@ async function mark() {
     const text = format(pref.linkPattern, data);
 
     const basename = (data.title || 'clip')
-        .replace(/[:./|?]/g, '')
+        .replace(/[:?"#\\*<>|%/«»„“”]/g, '')
         .trim()
         .slice(0, 120)
         .trim();
@@ -124,6 +124,7 @@ async function mark() {
     await sendToZim([
         `notebook=${pref.markNotebook || OPTION_MARK_NOTEBOOK_DEFAULT}`,
         `basename=${basename}`,
+        `option:zimclip_title=${encodeURIComponent(data.title || 'clip')}`,
         `text=${encodeURIComponent(text)}`,
         'marks'
     ]);
@@ -161,7 +162,7 @@ async function clip() {
     const args = [
         `notebook=${pref.clipNotebook || OPTION_MARK_NOTEBOOK_DEFAULT}`,
         `option:url=${tab.url}`,
-        `basename=${(data.title || 'clip').replace(/[:./|?]/g, '').trim()}`,
+        `basename=${(data.title || 'clip').replace(/[:?"#\\*<>|%/«»„“”]/g, '').trim()}`,
         `text=${encodeURIComponent(data.selection)}`,
         'clips'
     ];

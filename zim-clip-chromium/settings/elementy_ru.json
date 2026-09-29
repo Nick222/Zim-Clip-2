@@ -1,4 +1,7 @@
 {
+  "remove_title_suffixes": [
+    " • Новости науки"
+  ],
   "title": [
     "meta[property=\"og:title\"]"
   ],

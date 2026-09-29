@@ -38,11 +38,13 @@ class ZimClipPluginCommand(QuickNotePluginCommand):
     def run(self):
 
         action = None
+        title = None
 
         for option in self.opts.get('option', []):
             if option.startswith('zimclip_action='):
                 action = option[len('zimclip_action='):]
-                break
+            elif option.startswith('zimclip_title='):
+                title = option[len('zimclip_title='):]
 
         # --- Clip: current Zim page ---
         if action == 'clips':
@@ -185,4 +187,19 @@ class ZimClipPluginCommand(QuickNotePluginCommand):
 
         self.opts['namespace'] = properties['mark_section']
 
-        return QuickNotePluginCommand.run(self)
+        dialog = QuickNotePluginCommand.run(self)
+
+        if title and dialog is not None:
+            basename = self.opts.get('basename', '')
+
+            if basename and basename != title:
+                buffer = dialog.textview.get_buffer()
+                start, end = buffer.get_bounds()
+                text = start.get_text(end)
+
+                if basename in text:
+                    buffer.set_text(
+                        text.replace(basename, title)
+                    )
+
+        return dialog

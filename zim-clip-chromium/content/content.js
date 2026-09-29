@@ -1,8 +1,6 @@
 /*global browser, Html2Wiki */
 
 var zimclip = {
-    RE_CHARS: /[:./]/g,
-
     META_KEYS: [
         'title',
         'type',
@@ -35,13 +33,23 @@ var zimclip = {
     siteProfile: null,
     siteProfilePromise: null,
 
-    getTitle: function (title) {
+    getTitle: function (title, profile) {
         if (!title) title = document.title;
 
-        return title
-            .replace(zimclip.RE_CHARS, '-')
-            .replace(/["«»„“”]/g, '')
-            .trim();
+        title = title.trim();
+
+        if (profile && Array.isArray(profile.remove_title_suffixes)) {
+            profile.remove_title_suffixes.forEach(function (suffix) {
+                if (suffix && title.endsWith(suffix)) {
+                    title = title.slice(
+                        0,
+                        title.length - suffix.length
+                    ).trim();
+                }
+            });
+        }
+
+        return title;
     },
 
     /*
@@ -226,7 +234,13 @@ var zimclip = {
 
             if (value) {
                 if (key === 'title') {
-                    value = zimclip.getTitle(value);
+                    value = zimclip.getTitle(value, profile);
+                }
+
+                if (key === 'publisher') {
+                    value = value
+                        .replace(/^["«»„“”]+|["«»„“”]+$/g, '')
+                        .trim();
                 }
 
                 zimclip.metas[key] = value;
@@ -781,6 +795,12 @@ var zimclip = {
                     value = zimclip.getTitle(
                         value
                     );
+                }
+
+                if (name === 'publisher') {
+                    value = value
+                        .replace(/^["«»„“”]+|["«»„“”]+$/g, '')
+                        .trim();
                 }
 
                 zimclip.metas[name] = value;
