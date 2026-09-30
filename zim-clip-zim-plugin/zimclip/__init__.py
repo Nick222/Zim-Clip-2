@@ -190,6 +190,36 @@ class ZimClipPluginCommand(QuickNotePluginCommand):
 
         self.opts['namespace'] = properties['mark_section']
 
+        # --- Make basename unique ---
+        basename = self.opts.get('basename', '')
+
+        if basename:
+            namespace = self.opts['namespace']
+
+            if namespace:
+                base_path = Path(namespace + ':' + basename)
+            else:
+                base_path = Path(basename)
+
+            if notebook.get_page(base_path).exists():
+                number = 1
+
+                while True:
+                    new_basename = '%s %04d' % (basename, number)
+
+                    if namespace:
+                        new_path = Path(
+                            namespace + ':' + new_basename
+                        )
+                    else:
+                        new_path = Path(new_basename)
+
+                    if not notebook.get_page(new_path).exists():
+                        self.opts['basename'] = new_basename
+                        break
+
+                    number += 1
+
         dialog = QuickNotePluginCommand.run(self)
 
         if title and dialog is not None:
