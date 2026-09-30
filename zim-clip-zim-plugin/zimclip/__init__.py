@@ -4,6 +4,12 @@ from zim.notebook import Path
 from zim.main import UsageError, build_command
 from zim.plugins.quicknote import QuickNotePluginCommand
 from zim.parse.encode import url_decode, URL_ENCODE_DATA
+from zim.fs import Dir
+import json
+import os
+import shutil
+import tempfile
+import urllib.request
 
 class ZimClipPlugin(PluginClass):
     plugin_info = {
@@ -39,6 +45,8 @@ class ZimClipPluginCommand(QuickNotePluginCommand):
 
         action = None
         title = None
+        image_data = []
+        referer = ''
 
         for option in self.opts.get('option', []):
             if option.startswith('zimclip_action='):
@@ -46,6 +54,20 @@ class ZimClipPluginCommand(QuickNotePluginCommand):
             elif option.startswith('zimclip_title='):
                 title = url_decode(
                     option[len('zimclip_title='):],
+                    mode=URL_ENCODE_DATA
+                )
+            elif option.startswith('zimclip_images='):
+                try:
+                    raw = url_decode(
+                        option[len('zimclip_images='):],
+                        mode=URL_ENCODE_DATA
+                    )
+                    image_data = json.loads(raw)
+                except (ValueError, TypeError, json.JSONDecodeError):
+                    image_data = []
+            elif option.startswith('zimclip_referer='):
+                referer = url_decode(
+                    option[len('zimclip_referer='):],
                     mode=URL_ENCODE_DATA
                 )
 
@@ -220,7 +242,101 @@ class ZimClipPluginCommand(QuickNotePluginCommand):
 
                     number += 1
 
+        attachments_dir = None
+
+        if image_data:
+            attachments_dir = tempfile.mkdtemp(prefix='zimclip-images-')
+            downloaded = 0
+
+            for item in image_data[:2]:
+                if not isinstance(item, dict):
+                    continue
+
+                url = item.get('url', '')
+                name = item.get('name', '')
+
+                if not url or not name:
+                    continue
+
+                name = os.path.basename(name)
+
+                if not name:
+                    continue
+
+                try:
+                    request = urllib.request.Request(
+                        url,
+                        headers={
+                            'User-Agent': 'Mozilla/5.0 Zim-Clip-2',
+                            'Referer': referer or url,
+                        }
+                    )
+
+                    with urllib.request.urlopen(
+                        request,
+                        timeout=20
+                    ) as response:
+                        content = response.read()
+                        content_type = response.headers.get_content_type()
+
+                    if not content:
+                        continue
+
+                    # Use the actual format reported by the server.
+                    extensions = {
+                        'image/jpeg': '.jpg',
+                        'image/png': '.png',
+                        'image/webp': '.webp',
+                        'image/gif': '.gif',
+                        'image/bmp': '.bmp',
+                        'image/tiff': '.tif',
+                        'image/svg+xml': '.svg',
+                    }
+
+                    extension = extensions.get(content_type)
+
+                    if extension:
+                        original_name = name
+                        base, _ = os.path.splitext(name)
+                        name = base + extension
+
+                        if name != original_name:
+                            text = self.opts.get('text', '')
+                            self.opts['text'] = text.replace(
+                                original_name,
+                                name
+                            )
+
+                    with open(
+                        os.path.join(attachments_dir, name),
+                        'wb'
+                    ) as fh:
+                        fh.write(content)
+
+                    downloaded += 1
+                except Exception:
+                    continue
+
+            if downloaded == 0:
+                shutil.rmtree(attachments_dir, ignore_errors=True)
+                attachments_dir = None
+
+        if attachments_dir:
+            self.opts['attachments'] = Dir(attachments_dir)
+
+        print('ZimClip TEXT BEFORE QUICKNOTE:')
+        print(self.opts.get('text', ''))
+
         dialog = QuickNotePluginCommand.run(self)
+
+        if attachments_dir and dialog is not None:
+            dialog.connect(
+                'destroy',
+                lambda *_: shutil.rmtree(
+                    attachments_dir,
+                    ignore_errors=True
+                )
+            )
 
         if title and dialog is not None:
             basename = self.opts.get('basename', '')

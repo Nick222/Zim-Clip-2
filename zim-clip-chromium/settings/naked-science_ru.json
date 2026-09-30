@@ -35,5 +35,16 @@
   ],
   "image": [
     "meta[property=\"og:image\"]"
-  ]
+  ],
+  "mark_content": true,
+  "content_root_selector": ".ns-editorial-article",
+  "content_selector": "p.wp-block-paragraph, li",
+  "content_image_selector": "figure.post-image-container img",
+  "content_images": 1,
+  "original_source": [
+    "textlink:опубликована",
+    "textlink:опубликованы",
+    "textlink:опубликовано",
+    "textlink:опубликован"
+]
 }

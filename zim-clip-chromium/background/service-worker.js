@@ -113,7 +113,11 @@ async function mark() {
         {action: 'metas'}
     );
 
-    const text = format(pref.linkPattern, data);
+    let text = format(pref.linkPattern, data);
+
+    if (data.content) {
+        text += '\n\n====== Текст ======\n\n' + data.content;
+    }
 
     const basename = (data.title || 'clip')
         .replace(/[:?"#\\*<>|%/«»„“”]/g, '')
@@ -125,6 +129,8 @@ async function mark() {
         `notebook=${pref.markNotebook || OPTION_MARK_NOTEBOOK_DEFAULT}`,
         `basename=${basename}`,
         `option:zimclip_title=${encodeURIComponent(data.title || 'clip')}`,
+        `option:zimclip_referer=${encodeURIComponent(tab.url)}`,
+        `option:zimclip_images=${encodeURIComponent(JSON.stringify(data.content_pics || []))}`,
         `text=${encodeURIComponent(text)}`,
         'marks'
     ]);

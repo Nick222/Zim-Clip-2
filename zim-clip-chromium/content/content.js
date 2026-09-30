@@ -11,7 +11,8 @@ var zimclip = {
         'modified',
         'publisher',
         'description',
-        'keywords'
+        'keywords',
+        'original_source'
     ],
 
     META_KEYS_MAP: {
@@ -148,6 +149,326 @@ var zimclip = {
 
     /*
      * =========================================================
+     * Mark article content
+     * =========================================================
+     */
+
+    getProfileElement: function (selector) {
+        if (!selector) {
+            return null;
+        }
+
+        if (!Array.isArray(selector)) {
+            selector = [selector];
+        }
+
+        for (var i = 0; i < selector.length; i += 1) {
+            if (!selector[i]) {
+                continue;
+            }
+
+            try {
+                var element = document.querySelector(selector[i]);
+
+                if (element) {
+                    return element;
+                }
+            } catch (e) {
+                /* Ignore invalid selectors in a profile. */
+            }
+        }
+
+        return null;
+    },
+
+    getImageFilename: function (url, index, image) {
+        var name = '';
+
+        // Сначала пробуем подпись к изображению
+        if (image) {
+            var figure = image.closest('figure');
+
+            if (figure) {
+                var caption = figure.querySelector('figcaption');
+
+                if (caption) {
+                    name = caption.textContent.trim();
+                }
+            }
+
+            // Если подписи нет — пробуем alt
+            if (!name) {
+                name = image.getAttribute('alt') || '';
+            }
+        }
+
+        // Если нет подписи и alt — берём имя из URL
+        if (!name) {
+            try {
+                name = decodeURIComponent(
+                    new URL(url, window.location.href).pathname
+                        .split('/')
+                        .pop() || ''
+                );
+            } catch (e) {
+                name = '';
+            }
+        }
+
+        // Убираем переводы строк и лишние пробелы
+        name = name
+            .replace(/\s+/g, ' ')
+            .trim();
+
+        // Недопустимые для имени файла символы
+        name = name.replace(/[\\/:*?"<>|%]/g, '_');
+
+        if (!name || name === '.' || name === '..') {
+            name = 'image-' + String(index + 1).padStart(2, '0');
+        }
+
+        // Получаем расширение исходного файла
+        var extension = '.jpg';
+
+        try {
+            var pathname = new URL(
+                url,
+                window.location.href
+            ).pathname;
+
+            var match = pathname.match(/(\.[a-zA-Z0-9]{2,5})$/);
+
+            if (match) {
+                extension = match[1].toLowerCase();
+            }
+        } catch (e) {
+            // Оставляем .jpg
+        }
+
+        // Если имя уже заканчивается расширением — не добавляем второе
+        if (!/\.[a-zA-Z0-9]{2,5}$/.test(name)) {
+            name += extension;
+        }
+
+        // Ограничиваем длину
+        if (name.length > 120) {
+            var dot = name.lastIndexOf('.');
+            var ext = dot > 0
+                ? name.substring(dot)
+                : extension;
+
+            name = name.substring(0, 120 - ext.length) + ext;
+        }
+
+        return name;
+    },
+
+    getImageUrl: function (node) {
+        var url =
+            node.currentSrc ||
+            node.getAttribute('src') ||
+            node.getAttribute('data-src') ||
+            node.getAttribute('data-original') ||
+            '';
+
+        if (!url) {
+            var srcset = node.getAttribute('srcset');
+
+            if (srcset) {
+                url = srcset.split(',')[0].trim().split(/\s+/)[0];
+            }
+        }
+
+        try {
+            return new URL(url, window.location.href).href;
+        } catch (e) {
+            return '';
+        }
+    },
+
+    getMarkContent: async function (profile) {
+        console.log('getMarkContent START');
+        console.log('ZimClip pics:', pics);
+        if (!profile || !profile.mark_content) {
+            return {content: '', pics: []};
+        }
+
+        var selector = profile.content_selector || 'article';
+        var rootSelector = profile.content_root_selector || '';
+        var elements = [];
+
+        if (rootSelector) {
+            var roots = [];
+
+            try {
+                roots = Array.from(document.querySelectorAll(rootSelector));
+            } catch (e) {
+                roots = [];
+            }
+
+            // Выбираем корень с наибольшим количеством элементов content_selector.
+            var bestRoot = null;
+            var bestCount = 0;
+
+            roots.forEach(function (root) {
+                var count = 0;
+
+                try {
+                    count = root.querySelectorAll(selector).length;
+                } catch (e) {
+                    count = 0;
+                }
+
+                if (count > bestCount) {
+                    bestRoot = root;
+                    bestCount = count;
+                }
+            });
+
+            if (bestRoot) {
+                try {
+                    elements = Array.from(bestRoot.querySelectorAll(selector));
+                } catch (e) {
+                    elements = [];
+                }
+            }
+        } else {
+            try {
+                elements = Array.from(document.querySelectorAll(selector));
+            } catch (e) {
+                elements = [];
+            }
+        }
+
+        if (!elements.length) {
+            return {content: '', pics: []};
+        }
+
+        var pics = [];
+
+        if (profile.content_image_selector) {
+            document.querySelectorAll(profile.content_image_selector)
+                .forEach(function (img) {
+                    var src = img.src || img.getAttribute('src');
+                    if (src) {
+                        pics.push(src);
+                    }
+                });
+        }
+
+        var container = document.createElement('div');
+
+        elements.forEach(function (element) {
+            container.appendChild(element.cloneNode(true));
+        });
+
+        /*
+         * Добавляем картинки из исходного документа,
+         * если они находятся вне p/li
+         */
+        if (profile.content_image_selector) {
+            try {
+                var pageImages = document.querySelectorAll(
+                    profile.content_image_selector
+                );
+
+                console.log(
+                    'ZimClip profile image selector:',
+                    profile.content_image_selector
+                );
+
+                console.log(
+                    'ZimClip page images:',
+                    pageImages
+                );
+
+                Array.from(pageImages).reverse().forEach(function (image) {
+                    var figure = image.closest('figure.post-image-container');
+
+                    container.insertBefore(
+                        (figure || image).cloneNode(true),
+                        container.firstChild
+                    );
+                });
+
+                console.log(
+                    'ZimClip container HTML after images:',
+                    container.innerHTML
+                );
+
+            } catch (e) {
+                console.log(
+                    'ZimClip image selector error:',
+                    e
+                );
+            }
+        }
+
+        var imageSelector = profile.content_image_selector || 'img';
+        var candidates = [];
+
+        try {
+            candidates = Array.from(
+                container.querySelectorAll(imageSelector)
+            );
+        } catch (e) {
+            candidates = Array.from(container.querySelectorAll('img'));
+        }
+
+        var limit = Number(profile.content_images);
+
+        if (!Number.isFinite(limit)) {
+            limit = 2;
+        }
+
+        limit = Math.max(0, Math.floor(limit));
+
+        var selected = candidates.slice(0, limit);
+        var selectedSet = new Set(selected);
+        var pics = [];
+
+        console.log('ZimClip image candidates:', candidates);
+        console.log('ZimClip selected images:', selected);
+
+        Array.from(container.querySelectorAll('img')).forEach(function (image, index) {
+            var url = zimclip.getImageUrl(image);
+
+            if (!selectedSet.has(image) || !url) {
+                image.remove();
+                return;
+            }
+
+            var name = zimclip.getImageFilename(url, index, image);
+            image.src = url;
+            image.setAttribute('data-zimclip-name', name);
+
+            pics.push({
+                name: name,
+                url: url
+            });
+        });
+
+        // Наши выбранные изображения должны быть локальными,
+        // без ссылки на исходную картинку.
+        Array.from(container.querySelectorAll('img')).forEach(function (image) {
+            var parent = image.parentElement;
+
+            if (parent && parent.tagName.toLowerCase() === 'a') {
+                parent.replaceWith(image);
+            }
+        });
+
+        var h2w = new Html2Wiki('zim');
+        var content = h2w.read(container).trim();
+
+        return {
+            content: content,
+            pics: pics
+        };
+    },
+
+    /*
+     * =========================================================
      * HTML → Wiki
      * =========================================================
      */
@@ -253,6 +574,14 @@ var zimclip = {
          */
         if (!zimclip.metas.url) {
             zimclip.metas.url = window.location.href;
+        }
+
+        if (profile.mark_content) {
+            return zimclip.getMarkContent(profile).then(function (result) {
+                zimclip.metas.content = result.content;
+                zimclip.metas.content_pics = result.pics;
+                return zimclip.metas;
+            });
         }
 
         return zimclip.metas;
@@ -503,6 +832,55 @@ var zimclip = {
 
         if (source.indexOf('value:') === 0) {
             return [source.substring('value:'.length)];
+        }
+
+        if (source.indexOf('href:') === 0) {
+            try {
+                var hrefElements = document.querySelectorAll(
+                    source.substring('href:'.length)
+                );
+                var hrefValues = [];
+
+                hrefElements.forEach(function (element) {
+                    var href = element.getAttribute('href');
+                    if (href) {
+                        hrefValues.push(
+                            new URL(href, window.location.href).href
+                        );
+                    }
+                });
+
+                return hrefValues;
+            } catch (e) {
+                return [];
+            }
+        }
+
+        if (source.indexOf('textlink:') === 0) {
+            var linkText = source
+                .substring('textlink:'.length)
+                .trim()
+                .toLowerCase();
+            var linkValues = [];
+
+            document.querySelectorAll('a[href]').forEach(function (element) {
+                var text = element.textContent.trim().toLowerCase();
+
+                if (linkText && text.indexOf(linkText) !== -1) {
+                    try {
+                        linkValues.push(
+                            new URL(
+                                element.getAttribute('href'),
+                                window.location.href
+                            ).href
+                        );
+                    } catch (e) {
+                        /* Ignore malformed links. */
+                    }
+                }
+            });
+
+            return linkValues;
         }
 
         /*

@@ -330,7 +330,7 @@ Html2Wiki.addRuleset('zim', {
             return this.pics;
         },
         open: function (node) {
-            var name = node.src.split('/').pop();
+            var name = node.getAttribute('data-zimclip-name') || node.src.split('/').pop();
             this.pics.push({name: name, url: node.src});
             return '{{./' + name;
         },
@@ -528,7 +528,7 @@ Html2Wiki.addRuleset('md', Object.assign({}, Html2Wiki.getRuleset('zim'), {
             return this.pics;
         },
         open: function (node) {
-            var name = node.src.split('/').pop();
+            var name = node.getAttribute('data-zimclip-name') || node.src.split('/').pop();
             this.pics.push({name: name, url: node.src});
             return `![${node.alt || ''}](./${name})`;
         },
