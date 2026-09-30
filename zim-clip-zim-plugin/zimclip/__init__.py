@@ -190,15 +190,6 @@ class ZimClipPluginCommand(QuickNotePluginCommand):
 
         self.opts['namespace'] = properties['mark_section']
 
-        with open(
-            '/home/nick/TMP/zimclip_opts.txt',
-            'w',
-            encoding='utf-8'
-        ) as f:
-            f.write(repr(self.opts) + '\n')
-
-
-
         dialog = QuickNotePluginCommand.run(self)
 
         if title and dialog is not None:
