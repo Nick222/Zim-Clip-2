@@ -288,7 +288,6 @@ var zimclip = {
 
     getMarkContent: async function (profile) {
         console.log('getMarkContent START');
-        console.log('ZimClip pics:', pics);
         if (!profile || !profile.mark_content) {
             return {content: '', pics: []};
         }
@@ -425,7 +424,6 @@ var zimclip = {
 
         var selected = candidates.slice(0, limit);
         var selectedSet = new Set(selected);
-        var pics = [];
 
         console.log('ZimClip image candidates:', candidates);
         console.log('ZimClip selected images:', selected);
@@ -451,10 +449,10 @@ var zimclip = {
         // Наши выбранные изображения должны быть локальными,
         // без ссылки на исходную картинку.
         Array.from(container.querySelectorAll('img')).forEach(function (image) {
-            var parent = image.parentElement;
+            var link = image.closest('a');
 
-            if (parent && parent.tagName.toLowerCase() === 'a') {
-                parent.replaceWith(image);
+            if (link) {
+                link.replaceWith(image);
             }
         });
 

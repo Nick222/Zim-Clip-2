@@ -29,5 +29,11 @@
   ],
   "keywords": [
     "meta[property=\"article:tag\"]"
+  ],
+  "mark_content": true,
+  "content_selector": "div.itemblock div.memo",
+  "content_images": 1,
+  "original_source": [
+    "href:div.itemblock div.memo p.small > a"
   ]
 }
