@@ -5,6 +5,7 @@ import os
 import struct
 import subprocess
 import sys
+import tempfile
 
 from urllib.parse import unquote
 
@@ -104,6 +105,27 @@ def main():
                 notebook = arg[len('notebook='):]
                 continue
 
+            if arg.startswith('text='):
+                encoded_text = arg[5:]
+                encoded_size = len(encoded_text.encode('utf-8'))
+
+                if encoded_size > 100000:
+                    fd, text_file = tempfile.mkstemp(
+                        prefix='zimclip-text-',
+                        suffix='.txt'
+                    )
+
+                    with os.fdopen(fd, 'w', encoding='utf-8') as fh:
+                        fh.write(unquote(encoded_text))
+
+                    zim_args.append(
+                        '--option=zimclip_text_file=' + text_file
+                    )
+                else:
+                    zim_args.append('--' + arg)
+
+                continue
+
             if arg.startswith('option:'):
                 zim_args.append('--option=' + arg[7:])
             else:
@@ -141,13 +163,34 @@ def main():
 
         cmd.extend(zim_args)
 
-        subprocess.Popen(
-            cmd,
-            cwd=None,
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
-            start_new_session=True
-        )
+        with open(
+            '/home/nick/TMP/zimclip-zim.log',
+            'a',
+            encoding='utf-8'
+        ) as log:
+            log.write('ZIM CMD: ' + repr(cmd) + '\n')
+            log.flush()
+
+            try:
+                process = subprocess.Popen(
+                    cmd,
+                    cwd=None,
+                    stdout=log,
+                    stderr=log,
+                    start_new_session=True
+                )
+
+                log.write(
+                    'Popen OK, pid=%s\n' % process.pid
+                )
+                log.flush()
+
+            except Exception as e:
+                log.write(
+                    'Popen ERROR: %r\n' % e
+                )
+                log.flush()
+                raise
 
         write_message({'ok': True})
         return

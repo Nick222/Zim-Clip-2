@@ -1,0 +1,31 @@
+{
+  "title": [
+    "meta[property=\"og:title\"]"
+  ],
+  "author": [
+    "text:.site-title"
+  ],
+  "date": [
+    "text:time.entry-date.published"
+  ],
+  "publisher": [
+    "text:.site-title"
+  ],
+  "description": [
+    "meta[property=\"og:description\"]"
+  ],
+  "keywords": [
+    "meta[name=\"keywords\"]"
+  ],
+  "type": [
+    "value:обзор"
+  ],
+  "url": [
+    "meta[property=\"og:url\"]"
+  ],
+  "image": [
+    "meta[property=\"og:image\"]"
+  ],
+  "mark_content": true,
+  "content_selector": ".entry-content"
+}

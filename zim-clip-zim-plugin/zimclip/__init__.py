@@ -48,6 +48,8 @@ class ZimClipPluginCommand(QuickNotePluginCommand):
         image_data = []
         referer = ''
 
+        text_file = None
+
         for option in self.opts.get('option', []):
             if option.startswith('zimclip_action='):
                 action = option[len('zimclip_action='):]
@@ -56,6 +58,8 @@ class ZimClipPluginCommand(QuickNotePluginCommand):
                     option[len('zimclip_title='):],
                     mode=URL_ENCODE_DATA
                 )
+            elif option.startswith('zimclip_text_file='):
+                text_file = option[len('zimclip_text_file='):]
             elif option.startswith('zimclip_images='):
                 try:
                     raw = url_decode(
@@ -70,6 +74,16 @@ class ZimClipPluginCommand(QuickNotePluginCommand):
                     option[len('zimclip_referer='):],
                     mode=URL_ENCODE_DATA
                 )
+
+        if text_file:
+            try:
+                with open(text_file, encoding='utf-8') as fh:
+                    self.opts['text'] = fh.read()
+            finally:
+                try:
+                    os.unlink(text_file)
+                except OSError:
+                    pass
 
         # --- Clip: current Zim page ---
         if action == 'clips':
