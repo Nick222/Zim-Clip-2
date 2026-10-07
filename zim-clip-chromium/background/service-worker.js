@@ -116,7 +116,7 @@ async function mark() {
     let text = format(pref.linkPattern, data);
 
     if (data.content) {
-        text += '\n\n====== Текст ======\n\n' + data.content;
+        text += '\n\n===== Текст =====\n\n' + data.content;
     }
 
     const basename = (data.title || 'clip')
